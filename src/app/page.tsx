@@ -1,34 +1,52 @@
-import path from "path";
-import fs from "fs";
+"use client";
 
-async function getStreamData() {
-  // JSONファイルのパスを取得
-  const jsonPath = path.join(process.cwd(), "public/json_data/stream.json");
+import { useState, useEffect } from "react";
 
-  // JSONファイルを読み込む
-  const fileContent = fs.readFileSync(jsonPath, "utf8");
+type StreamData = {
+  [key: string]: string;
+};
 
-  // JSONをパースして返す
-  return JSON.parse(fileContent).stream;
-}
+export default function Home() {
+  const [streamData, setStreamData] = useState<StreamData>({});
+  const [searchQuery, setSearchQuery] = useState("");
 
-export default async function Home() {
-  const streamData = await getStreamData();
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch("/json_data/stream.json");
+      const data = await response.json();
+      setStreamData(data.stream);
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredServices = Object.entries(streamData).filter(([service]) =>
+    service.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <main className="min-h-screen p-8">
       <h1 className="text-2xl font-bold mb-6">Streaming Services</h1>
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="サービスを検索..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
       <ul className="space-y-2">
-        {Object.entries(streamData).map(([service, url]) => (
+        {filteredServices.map(([service, url]) => (
           <li
             key={service}
             className="hover:bg-gray-100 hover:text-black p-2 rounded"
           >
             <a
-              href={url as string}
+              href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block w-full" // リンクを幅いっぱいに表示
+              className="block w-full"
             >
               {service}
             </a>
